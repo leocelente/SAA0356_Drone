@@ -6,6 +6,7 @@
 ** Objetivos
   do final do projeto, acima da aplicação, é aplicar os conhecimentos sobre sistemas embarcados
   adquiridos ao longo do semestre. Isso inclui, Linux Embarcado, Comunicação em Rede, Comunicação
+  entre Processos e Protocolos de Comunicação.
 
 ** Codenome
    O codenome do projeto é referencia a Louis Charles Breguet, um dos primeiros a tentar construir
@@ -22,3 +23,8 @@
 
   Seguindo recomendações, todo projeto será programado na linguagem C e será executado
   em no /System on a Chip/ (SoC) da Toradex. 
+  #+CAPTION: Diagrama de Blocos de Hardware
+[[./assets/diagrama-hardware.png]]
+
+  #+CAPTION: Diagrama de Blocos de Software
+  [[./assets/diagrama-software.png]]
