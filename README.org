@@ -14,6 +14,7 @@
 
 #+CAPTION: Protótipo de quadrotor datado de 1907
 #+NAME:   fig:SED-HR4049
+#+attr_html: :width 250px
 [[./assets/Breguet_Gyroplane_1907.jpg]]
 
 * Arquitetura
