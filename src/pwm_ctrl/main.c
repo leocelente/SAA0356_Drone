@@ -21,6 +21,7 @@
 config_t configuration;
 ipc_server_t server;
 ipc_connection_t conn;
+pwm_channel_t ch0, ch1, ch2, ch3;
 
 /**
  *  Called from INIH library, to parse parameters

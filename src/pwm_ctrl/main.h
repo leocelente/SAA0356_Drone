@@ -16,8 +16,6 @@ typedef union {
   uint8_t raw[sizeof(command_t)];
 } input_t;
 
-pwm_channel_t ch0, ch1, ch2, ch3;
-
 typedef struct {
   char channel0[PATH_SIZE];
   char channel1[PATH_SIZE];
