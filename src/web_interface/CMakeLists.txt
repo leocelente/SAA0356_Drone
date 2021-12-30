@@ -1,11 +1,5 @@
 cmake_minimum_required( VERSION 3.10.3 )
 
-project(            breguet_web_server
-                    VERSION 0.1 
-                    LANGUAGES C 
-                    DESCRIPTION "Web Interface component"
-                    HOMEPAGE_URL "https://github.com/leocelente/SAA0356_Drone"
-)
 find_package(Threads REQUIRED)
 
 add_executable(web_interface)
