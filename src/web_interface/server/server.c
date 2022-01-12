@@ -26,7 +26,7 @@ static void extract_from_raw(char const *buffer, request_t *request) {
 static method_t str_to_method(char const *str) {
   if (strcmp(str, "GET") == 0) {
     return GET;
-  } else if (strcmp(str, "POST")) {
+  } else if (strcmp(str, "POST") == 0) {
     return POST;
   } else {
     return UNKN;
@@ -45,19 +45,26 @@ static void *new_client_handler(void *args) {
 
   char buffer[LINE_MAX] = {0};
   int const valread = read(sock_client, buffer, sizeof(buffer));
-
+  // printf("[%s]", buffer);
   request_t request = {0};
   extract_from_raw(buffer, &request);
   method_t method = str_to_method(request.method);
 
+  char response[128] = {0};
   for (int i = 0; i < pserver->endpoint_count; ++i) {
     if (strcmp(request.endpoint, pserver->endpoints[i].name) == 0) {
-      pserver->endpoints[i].callback(method, request.body);
+      pserver->endpoints[i].callback(method, request.body, response);
     }
   }
 
-  char const response[] = "HTTP/1.1 200 OK\r\n\n";
-  send(sock_client, response, sizeof(response), 0);
+  char ok[255] = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n\n";
+
+  if (strlen(response) > 0) {
+    strcat(ok, response);
+  }
+
+  // strcat(ok, "\r\n");
+  send(sock_client, ok, strlen(ok), 0);
   close(sock_client);
   return NULL;
 }

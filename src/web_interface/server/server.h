@@ -16,7 +16,7 @@ typedef enum { SERVER_OK = 0, SERVER_FAIL = 1 } server_e_t;
 
 typedef enum { GET, POST, UNKN } method_t;
 
-typedef void (*endpoint_callback)(method_t method, char *body);
+typedef void (*endpoint_callback)(method_t method, char *body, char *response);
 typedef struct {
   char const *name;
   endpoint_callback callback;

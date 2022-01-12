@@ -19,8 +19,7 @@
  *  Global configuration with PWM sysfs drivers path
  */
 config_t configuration;
-ipc_server_t server;
-ipc_connection_t conn;
+ipc_node_t ipc;
 pwm_channel_t ch0, ch1, ch2, ch3;
 
 /**
@@ -100,9 +99,6 @@ void handle_client(ipc_msg_t const *message) {
   pwm_set_duty_cycle(&ch1, speed_to_dutycycle(in.cmd.motor1));
   pwm_set_duty_cycle(&ch2, speed_to_dutycycle(in.cmd.motor2));
   pwm_set_duty_cycle(&ch3, speed_to_dutycycle(in.cmd.motor3));
-
-  ipc_msg_t ok = {.source = IPC_SERVER, .data = {0}};
-  ipc_server_send(&server, &ok);
 }
 
 int main(int argc, char **argv) {
@@ -116,7 +112,6 @@ int main(int argc, char **argv) {
 
   // Initialize motors
   printf("Initializing motors\r\n");
-  printf("%s\r\n", configuration.channel0);
   pwm_init(&ch0, configuration.channel0, 0, MOTOR_PWM_PERIOD);
   pwm_init(&ch1, configuration.channel1, 0, MOTOR_PWM_PERIOD);
   pwm_init(&ch2, configuration.channel2, 0, MOTOR_PWM_PERIOD);
@@ -124,19 +119,22 @@ int main(int argc, char **argv) {
 
   // initialize server
   printf("Initializing Server\r\n");
-  ipc_server_init(&server);
 
-  // wait for server commands
+  ipc_init(&ipc, 0, "web::motors");
+
   printf("Listening to clients...\r\n");
-  ipc_server_listen(&server, &conn, handle_client);
-  {
-    printf("Running simulated Command\r\n");
-    command_t test = {.motor0 = 0.1, .motor1 = 1, .motor2 = 10, .motor3 = 100};
-    input_t out = {.cmd = test};
-    ipc_msg_t msg;
-    memcpy(msg.data, out.raw, sizeof(out.raw));
-    handle_client(&msg);
-  }
+
+  ipc_msg_t msg;
+  ipc_listen(&ipc, handle_client);
+  printf("Calling Handle Client..\r\n");
+
+  // {
+  //   printf("Running simulated Command\r\n");
+  //   command_t test = {.motor0 = 0.1, .motor1 = 1, .motor2 = 10, .motor3 =
+  //   100}; input_t out = {.cmd = test}; ipc_msg_t msg; memcpy(msg.data,
+  //   out.raw, sizeof(out.raw)); handle_client(&msg);
+  // }
+
   printf("Closing Motor Controller!\r\n");
   return 0;
 }
