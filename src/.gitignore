@@ -3,3 +3,4 @@ build/
 compile_commands.json
 example.motors.ini
 control_panel/node_modules/
+test_driver/
