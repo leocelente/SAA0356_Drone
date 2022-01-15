@@ -46,7 +46,14 @@ pwm_e_t pwm_set_duty_cycle(pwm_channel_t *channel, duty_cycle_t duty_cycle) {
     perror("open");
     return 1;
   }
-  uint32_t dt_ns = ((duty_cycle * 1000.f) / 100.f) * channel->period;
+  // 1 ms = 1000 us = 1000000 ns
+  // min  = 1 ms
+  // max  = 2 ms
+  // (2 - 1)
+  float const one_ms = 1e6f;    // ns
+  float x = duty_cycle / 100.f; // 0.00...1.00
+  uint32_t dt_ns = one_ms + (x) * (one_ms);
+  // uint32_t dt_ns = ((duty_cycle * 1000.f) / 100.f) * channel->period;
   char buffer[24] = {0};
   sprintf(buffer, "%d", dt_ns);
   if (write(d, buffer, strlen(buffer)) < 0) {
