@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-sudo su -c "`pwd`/scripts/run-after.sh"
+sudo su -c "bash -x `pwd`/scripts/run-after.sh"
