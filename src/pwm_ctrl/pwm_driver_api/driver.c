@@ -43,7 +43,7 @@ pwm_e_t pwm_set_duty_cycle(pwm_channel_t *channel, duty_cycle_t duty_cycle) {
   strcat(path, "/duty_cycle");
   int d = open(path, O_RDWR);
   if (d < 0) {
-    printf("Failed to open file!\r\n");
+    perror("open");
     return 1;
   }
   uint32_t dt_ns = ((duty_cycle * 1000.f) / 100.f) * channel->period;
@@ -51,12 +51,12 @@ pwm_e_t pwm_set_duty_cycle(pwm_channel_t *channel, duty_cycle_t duty_cycle) {
   sprintf(buffer, "%d", dt_ns);
   if (write(d, buffer, strlen(buffer)) < 0) {
     close(d);
-    printf("Failed to write to file\r\n");
+    perror("write");
     return 2;
   }
   channel->duty_cycle = duty_cycle;
   close(d);
-  printf("Setting PWM Duty Cycle to: %d ns\r\n", dt_ns);
+  printf("%s = %d ns\r\n", path, dt_ns);
   return 0;
 }
 
@@ -66,21 +66,20 @@ pwm_e_t pwm_set_period(pwm_channel_t *channel, period_t period) {
   strcat(path, "/period");
   int d = open(path, O_RDWR);
   if (d < 0) {
-    printf("Failed to open file!\r\n");
+    perror("open");
     return 1;
   }
-  uint32_t period_ns = period * 1000;
+  uint32_t period_ns = period * 1000 * 1000;
   char buffer[24] = {0};
   sprintf(buffer, "%d", period_ns);
-  printf("Writing: %s to file\r\n", buffer);
   if (write(d, buffer, strlen(buffer)) < 0) {
     close(d);
-    printf("Failed to write to file\r\n");
+    perror("write");
     return 2;
   }
   channel->period = period;
   close(d);
-  printf("Setting PWM Period to :%d ns\r\n", period_ns);
+  printf("%s = %d ns\r\n", path, period_ns);
   return 0;
 }
 

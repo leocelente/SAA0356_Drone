@@ -44,13 +44,13 @@ static void *new_client_handler(void *args) {
   server_t *pserver = ((handler_args_t *)args)->pserver;
 
   char buffer[LINE_MAX] = {0};
-  int const valread = read(sock_client, buffer, sizeof(buffer));
-  // printf("[%s]", buffer);
+  int valread = read(sock_client, buffer, sizeof(buffer));
   request_t request = {0};
   extract_from_raw(buffer, &request);
   method_t method = str_to_method(request.method);
 
   char response[128] = {0};
+  /* Loop through configured endpoints, if match, call callback */
   for (int i = 0; i < pserver->endpoint_count; ++i) {
     if (strcmp(request.endpoint, pserver->endpoints[i].name) == 0) {
       pserver->endpoints[i].callback(method, request.body, response);
@@ -63,40 +63,40 @@ static void *new_client_handler(void *args) {
     strcat(ok, response);
   }
 
-  // strcat(ok, "\r\n");
   send(sock_client, ok, strlen(ok), 0);
   close(sock_client);
   return NULL;
 }
 
 server_e_t server_init(server_t *server) {
-  int const sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
     printf("Failed to CREATE Socket\r\n");
     return SERVER_FAIL;
   }
-  struct sockaddr_in const addr_in = {.sin_family = AF_INET,
-                                      .sin_addr = {.s_addr = INADDR_ANY},
-                                      .sin_port = htons(server->port)};
-
-  struct sockaddr *const paddr = (struct sockaddr *)&addr_in;
-  uint32_t addrlen = sizeof(addr_in);
-  int const binded = bind(sockfd, paddr, addrlen);
+  server->_socket.fd = sockfd;
+  struct sockaddr_in addr_in = {.sin_family = AF_INET,
+                                .sin_addr = {.s_addr = INADDR_ANY},
+                                .sin_port = htons(server->port)};
+  server->_socket.addr = addr_in;
+  struct sockaddr *const paddr = (struct sockaddr *)&server->_socket.addr;
+  server->_socket.paddr = paddr;
+  uint32_t addrlen = sizeof(server->_socket.addr);
+  server->_socket.addrlen = addrlen;
+  int binded = bind(sockfd, paddr, addrlen);
   if (binded < 0) {
-    printf("Failed to BIND Socket\r\n");
+    perror("bind");
     return SERVER_FAIL;
   }
-  server->_socket.fd = sockfd;
-  server->_socket.addrlen = addrlen;
-  server->_socket.paddr = paddr;
+
   return SERVER_OK;
 }
 
 server_e_t server_listen(server_t *server) {
 
-  int const listening = listen(server->_socket.fd, 2);
+  int listening = listen(server->_socket.fd, 2);
   if (listening < 0) {
-    printf("Failed  to LISTEN on socket\r\n");
+    perror("listen");
     return SERVER_FAIL;
   }
 
@@ -104,7 +104,7 @@ server_e_t server_listen(server_t *server) {
     int sock_client = accept(server->_socket.fd, server->_socket.paddr,
                              &server->_socket.addrlen);
     if (sock_client < 0) {
-      printf("Socket ACCEPT failed\r\n");
+      perror("accept");
       return SERVER_FAIL;
     }
 

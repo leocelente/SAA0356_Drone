@@ -34,8 +34,7 @@ pwm_channel_t ch0, ch1, ch2, ch3;
 static int parser(void *config, const char *section, const char *name,
                   const char *value) {
   config_t *pconfig = (config_t *)config;
-  printf("Trying to match parameter: %s:%s of value: %s\r\n", section, name,
-         value);
+  printf("Set: %s:%s to %s\r\n", section, name, value);
 
   if (MATCH("motor0", "path")) {
     strcpy(pconfig->channel0, value);
@@ -86,15 +85,11 @@ static float speed_to_dutycycle(float speed) {
  * `message`: data received from client
  */
 void handle_client(ipc_msg_t const *message) {
-
-  printf("Received a Message from Client!\r\n");
   input_t in = {0};
   memcpy(in.raw, message->data, sizeof(in.raw));
-  printf("Set motors to: %f, %f, %f, %f\r\n", in.cmd.motor0, in.cmd.motor1,
-         in.cmd.motor2, in.cmd.motor3);
+  printf("Set motors to: %.3f, %.3f, %.3f, %.3f\r\n", in.cmd.motor0,
+         in.cmd.motor1, in.cmd.motor2, in.cmd.motor3);
 
-  //? Should we disable the channels prior a reactivate them later to achieve
-  //? sync?
   pwm_set_duty_cycle(&ch0, speed_to_dutycycle(in.cmd.motor0));
   pwm_set_duty_cycle(&ch1, speed_to_dutycycle(in.cmd.motor1));
   pwm_set_duty_cycle(&ch2, speed_to_dutycycle(in.cmd.motor2));
@@ -103,7 +98,6 @@ void handle_client(ipc_msg_t const *message) {
 
 int main(int argc, char **argv) {
   printf("--Starting Motor Controller--\r\n");
-  printf("Checking config\r\n");
 
   if (!read_config(argv[1])) {
     printf("Failed to apply config!\r\n");
@@ -111,30 +105,20 @@ int main(int argc, char **argv) {
   }
 
   // Initialize motors
-  printf("Initializing motors\r\n");
   pwm_init(&ch0, configuration.channel0, 0, MOTOR_PWM_PERIOD);
   pwm_init(&ch1, configuration.channel1, 0, MOTOR_PWM_PERIOD);
   pwm_init(&ch2, configuration.channel2, 0, MOTOR_PWM_PERIOD);
   pwm_init(&ch3, configuration.channel3, 0, MOTOR_PWM_PERIOD);
 
-  // initialize server
-  printf("Initializing Server\r\n");
+  ipc_init(&ipc, 0);
 
-  ipc_init(&ipc, 0, "web::motors");
+  printf("Waiting for command...\r\n");
 
-  printf("Listening to clients...\r\n");
+  while (true) {
+    ipc_msg_t msg = {0};
+    ipc_recv(&ipc, &msg);
+    handle_client(&msg);
+  }
 
-  ipc_msg_t msg;
-  ipc_listen(&ipc, handle_client);
-  printf("Calling Handle Client..\r\n");
-
-  // {
-  //   printf("Running simulated Command\r\n");
-  //   command_t test = {.motor0 = 0.1, .motor1 = 1, .motor2 = 10, .motor3 =
-  //   100}; input_t out = {.cmd = test}; ipc_msg_t msg; memcpy(msg.data,
-  //   out.raw, sizeof(out.raw)); handle_client(&msg);
-  // }
-
-  printf("Closing Motor Controller!\r\n");
   return 0;
 }

@@ -1,18 +1,22 @@
 #include "main.h"
-#include "ipc.h"
-#include "server.h"
-#include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
 
-// ipc client mutex
-
-bool motor_flag = false;
-int key = 0;
+/* synchronizes motor flag, preventing multiple owners of resource */
 pthread_mutex_t flag_lock;
+
+/* controls resource permission */
+bool motor_flag = false;
+
+/* secret of current owner of motors */
+int key = 0;
+
+/* current motors state (duty_cycle) */
 int m0, m1, m2, m3;
+
 ipc_node_t node;
 
+/**
+ * Sends command to Motor Controller
+ */
 static void handle_motors(method_t method, char *body, char *response) {
   pthread_mutex_lock(&flag_lock);
   if (method == POST) {
@@ -25,7 +29,7 @@ static void handle_motors(method_t method, char *body, char *response) {
       float a[] = {m0, m1, m2, m3};
       ipc_msg_t msg = {.size = sizeof(a), .data = {0}};
       memcpy(msg.data, a, sizeof(a));
-      printf("Sending to motors\r\n");
+      printf("Passing command to Motors\r\n");
       ipc_send(&node, &msg);
     }
 
@@ -37,6 +41,9 @@ static void handle_motors(method_t method, char *body, char *response) {
   pthread_mutex_unlock(&flag_lock);
 }
 
+/**
+ * Called to reserve the motor resource.
+ */
 static void handle_acquire(method_t method, char *body, char *response) {
   pthread_mutex_lock(&flag_lock);
   if (method == GET) {
@@ -56,19 +63,19 @@ static void handle_acquire(method_t method, char *body, char *response) {
     strncpy(response, values, sizeof(values));
   }
   pthread_mutex_unlock(&flag_lock);
-  printf("[%s]\r\n", response);
 }
 
+/**
+ * Called to let other use the motor resource.
+ */
 static void handle_release(method_t method, char *body, char *response) {
   pthread_mutex_lock(&flag_lock);
   if (method == GET) {
     if (motor_flag) {
       motor_flag = false;
-      // printf("You no longer command the Resource\r\n");
       char values[] = "OK";
       strncpy(response, values, sizeof(values));
     } else {
-      // printf("Resource is already in free\r\n");
       char values[] = "FAIL";
       strncpy(response, values, sizeof(values));
     }
@@ -80,13 +87,13 @@ static void handle_release(method_t method, char *body, char *response) {
 int main(int argc, char **argv) {
   printf("--Start Web Interface--\r\n");
 
-  ipc_init(&node, 1, "web::motors");
+  ipc_init(&node, 1);
 
   endpoint_t api[] = {{"/motors", handle_motors},   //
                       {"/acquire", handle_acquire}, //
                       {"/release", handle_release}};
 
-  int const count = sizeof(api) / sizeof(api[0]);
+  int count = sizeof(api) / sizeof(api[0]);
   server_t server = {.port = 6644, .endpoint_count = count, .endpoints = api};
 
   server_init(&server);
