@@ -7,7 +7,6 @@ project(            breguet
                     HOMEPAGE_URL "https://github.com/leocelente/SAA0356_Drone"
         )
 
-# CMAKE_TOOLCHAIN_FILE = 
 set(EXPORT_COMPILE_COMMANDS true)
 # dependency order
 # web_interface -> pwm_ctrl-> ipc
